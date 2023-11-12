@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd 
 import numpy as np
 #import matplotlib.pyplot as plt
-import seaborn as sns
+#import seaborn as sns
 from fractions import Fraction
 from streamlit_extras.metric_cards import style_metric_cards
 from streamlit_extras.badges import badge
