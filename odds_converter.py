@@ -24,12 +24,9 @@ This app allows you to quickly reference sports betting odds and their implied p
 """)
 
 
-# Add website logo (doesn't work)
-#add_logo("/Users/Stephan/Desktop/R Projects/personal-website/BTP (3).png", height=300)
-
 "---"
 
-# App logo
+# App logo (not working)
 def btp_logo():
         add_logo("/Users/Stephan/Desktop/R Projects/personal-website/BTP (3).png", height=300)
 
@@ -108,7 +105,7 @@ tab1, tab2 = st.tabs(["📈 Odds", "🗃 About"])
 
 @st.cache_data #used to be st.cache I believe
 def load_data():
-    df = pd.read_csv("https://raw.githubusercontent.com/steodose/odds-converter/main/odds.csv")
+    df = pd.read_csv("/Users/Stephan/Desktop/Python/Odds-Converter/odds.csv")
     return df
 
 df = load_data()
