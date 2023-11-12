@@ -3,5 +3,5 @@ pandas
 numpy
 matplotlib
 seaborn
-fractions
-streamlit_extras
+Fraction
+streamlit-extras
