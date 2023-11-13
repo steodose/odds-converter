@@ -105,7 +105,7 @@ tab1, tab2 = st.tabs(["📈 Odds", "🗃 About"])
 
 @st.cache_data #used to be st.cache I believe
 def load_data():
-    df = pd.read_csv("/Users/Stephan/Desktop/Python/Odds-Converter/odds.csv")
+    df = pd.read_csv('https://raw.githubusercontent.com/steodose/odds-converter/main/odds.csv')
     return df
 
 df = load_data()
