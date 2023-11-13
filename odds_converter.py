@@ -8,7 +8,6 @@ import seaborn as sns
 from fractions import Fraction
 from streamlit_extras.metric_cards import style_metric_cards
 from streamlit_extras.badges import badge
-from streamlit_extras.app_logo import add_logo 
 #from st_aggrid import JsCode, AgGrid, GridOptionsBuilder
 
 
@@ -27,8 +26,8 @@ This app allows you to quickly reference sports betting odds and their implied p
 "---"
 
 # App logo (not working)
-def btp_logo():
-        add_logo("/Users/Stephan/Desktop/R Projects/personal-website/BTP (3).png", height=300)
+# def btp_logo():
+#         add_logo("/Users/Stephan/Desktop/R Projects/personal-website/BTP (3).png", height=300)
 
 # GitHub badge
 def example_github():
@@ -173,4 +172,3 @@ st.markdown("""
 example_twitter()
 example_github()
 
-btp_logo()
