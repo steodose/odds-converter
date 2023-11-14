@@ -8,6 +8,7 @@ import seaborn as sns
 from fractions import Fraction
 from streamlit_extras.metric_cards import style_metric_cards
 from streamlit_extras.badges import badge
+import altair as alt
 #from st_aggrid import JsCode, AgGrid, GridOptionsBuilder
 
 
@@ -100,7 +101,7 @@ style_metric_cards(border_color = '#CCC',
 
 # ---- Odds table ----
 
-tab1, tab2 = st.tabs(["📈 Odds", "🗃 About"])
+tab1, tab2, tab3 = st.tabs(["📈 Lookup Table", "🗃 About", "📊 Probability Chart"])
 
 @st.cache_data #used to be st.cache I believe
 def load_data():
@@ -119,7 +120,7 @@ tab1.subheader("Conversion Lookup")
 tab1.text('Investigate different odds systems and their implied probability conversions')
 
 # Set colormap equal to seaborn color palette
-cm = sns.color_palette("coolwarm", as_cmap=True)
+cm = sns.color_palette("vlag_r", as_cmap=True) #_r reverses color palette
 
 def color_negative_red(value):
   """
@@ -148,13 +149,6 @@ st.dataframe(df.style
             )
 
 
-# gd = GridOptionsBuilder.from_dataframe(df)
-# gd.configure_selection(selection_mode='', use_checkbox= "TRUE")
-
-# gridoptions = gd.build()
-# AgGrid(df, height=400, gridOptions=gridoptions,
-#        allow_unsafe_jscode="TRUE"
-
 # About page
 tab2.subheader("About")
 st.markdown("""
@@ -168,6 +162,56 @@ st.markdown("""
 
         """)
 
+
+# ---- Probability Bar Chart Tab ----
+
+# Calculate probabilities
+implied_probability_win = moneyline_to_implied_probability(moneyline)
+implied_probability_loss = 100 - implied_probability_win
+
+tab3.subheader("Probability Chart")
+tab3.text('Win-Loss chances')
+#tab3 = st.tabs("Probability Chart")
+
+# Data for bar chart
+prob_data = pd.DataFrame({
+        'Outcome': ['Win', 'Loss'],
+        'Probability': [implied_probability_win, implied_probability_loss],
+        'Color': ['#4E79A7', '#F28E2B']  # Specify colors for each bar
+    })
+
+# Altair bar chart
+# chart = alt.Chart(prob_data).mark_bar(cornerRadiusTopLeft=10,
+#     cornerRadiusTopRight=10
+#     ).encode(
+#         x=alt.X('Outcome', sort='descending', title=None),  # Remove 'Outcome' label and reverse order
+#         y=alt.Y('Probability', scale=alt.Scale(domain=[0, 100]), axis=alt.Axis(format='%')),  # Set y-axis range and format
+#         color=alt.Color('Color', scale=None)  # Use the specified hex colors
+#     )
+
+# Altair bar chart v2
+bars = alt.Chart(prob_data).mark_bar(cornerRadiusTopLeft=10,
+    cornerRadiusTopRight=10
+    ).encode(
+        x=alt.X('Outcome', sort='descending', title=None),  # Remove 'Outcome' label and reverse order
+        y=alt.Y('Probability:Q', scale=alt.Scale(domain=[0, 100]), axis=alt.Axis(format='%')),  # Adjusted scale
+        color=alt.Color('Color', scale=None)  # Use the specified hex colors
+    )
+
+    # Text layer for displaying percentages on bars
+text = bars.mark_text(
+        align='center',
+        baseline='middle',
+        dy=-10  # Adjust the vertical position of the text
+    ).encode(
+        text=alt.Text('Probability:Q', format='.1f')  # Format the text with one decimal
+    )
+
+    # Combine the bar and text layers
+chart = alt.layer(bars, text)
+    
+# Display Altair chart in Streamlit
+st.altair_chart(chart, use_container_width=True)
 
 example_twitter()
 example_github()
