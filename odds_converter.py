@@ -17,7 +17,7 @@ import altair as alt
 st.set_page_config(page_title="Odds Converter", page_icon=":game_die:")
 
 # Display BTP logo image
-logo_path_or_url = '/Users/Stephan/Desktop/R Projects/personal-website/BTP (3).png'
+logo_path_or_url = 'https://raw.githubusercontent.com/steodose/odds-converter/blob/main/BTP%20(3).png'
 #st.image(logo_path_or_url, width=100)  # Adjust width as needed
 
 # Create a two-column layout
