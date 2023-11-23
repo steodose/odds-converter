@@ -9,34 +9,9 @@ from fractions import Fraction
 from streamlit_extras.metric_cards import style_metric_cards
 from streamlit_extras.badges import badge
 import altair as alt
-#from st_aggrid import JsCode, AgGrid, GridOptionsBuilder
 
 
-
-# emojis: https://www.webfx.com/tools/emoji-cheat-sheet/
-st.set_page_config(page_title="Odds Converter", page_icon=":game_die:")
-
-# Display BTP logo image
-logo_path_or_url = 'https://raw.githubusercontent.com/steodose/odds-converter/blob/main/BTP%20(3).png'
-#st.image(logo_path_or_url, width=100)  # Adjust width as needed
-
-# Create a two-column layout
-col1, col2 = st.columns([1, 5])
-
-# Display the logo in the first column
-col1.image(logo_path_or_url, width=100)  # Adjust the width to fit your logo
-
-# Set the title in the second column
-col2.title(":game_die: Odds Converter Tool")
-
-
-# ---- MAINPAGE ----
-#st.title(":game_die: Odds Converter Tool")
-st.markdown(""" 
-This app allows you to quickly reference sports betting odds and their implied probabilities using various international systems. A **Between The Pipes** app by [Stephan Teodosescu](https://stephanteodosescu.com/).
-""")
-
-"---"
+# ---- Function definitions ------ #
 
 # GitHub badge
 def example_github():
@@ -77,30 +52,85 @@ def moneyline_to_fractional_odds(moneyline):
         fraction = Fraction(100, -moneyline).limit_denominator()
     return f"{fraction.numerator}/{fraction.denominator}"
 
+# Define additional conversion function for decimal odds
+def decimal_to_implied_probability(decimal_odds):
+    probability = 1 / decimal_odds
+    return round(probability * 100, 1)  # Convert to percentage
 
+# Define Decimal to Fractional Odds conversion function
+def decimal_to_fractional_odds(decimal_odds):
+    # Convert decimal odds to a Fraction and reduce it
+    fractional_odds = Fraction(decimal_odds - 1).limit_denominator()
+    return f"{fractional_odds.numerator}/{fractional_odds.denominator}"
+
+# Define Decinal to American odds conversion function
+def decimal_to_american_odds(decimal_odds):
+    if decimal_odds >= 2.0:
+        # For favorites
+        american_odds = (decimal_odds - 1) * 100
+    else:
+        # For underdogs
+        american_odds = -100 / (decimal_odds - 1)
+    return round(american_odds)
+
+
+
+# ---- MAINPAGE UI ----
+
+# emojis: https://www.webfx.com/tools/emoji-cheat-sheet/
+st.set_page_config(page_title="Odds Converter", page_icon=":game_die:")
+
+# Display BTP logo image
+logo_path_or_url = 'https://raw.githubusercontent.com/steodose/odds-converter/master/BTP.png'
+
+#st.image(logo_path_or_url, width=100)  # Adjust width as needed
+
+# Create a two-column layout for the rest of the content
+col1, col2 = st.columns([1, 5])
+
+# Display the logo in the first column
+col1.image(logo_path_or_url, width=100)  # Adjust the width to fit your logo
+
+# Set the title in the second column
+col2.title(":game_die: Odds Converter Tool")
+
+st.markdown(""" 
+This app allows you to quickly reference sports betting odds and their implied probabilities using various international systems. A **Between The Pipes** app by [Stephan Teodosescu](https://stephanteodosescu.com/).
+""")
+
+"---"
 
 # ---- Sidebar ----
 
-# Moneyline odds selection
+# Sidebar for odds type selection and input
+
 st.sidebar.header('Selector')
-moneyline = st.sidebar.number_input('Enter American Moneyline Odds', value=-110)
 
-st.sidebar.write("""
-                 Based on your selection you can see the chances of a team winning the game expressed in
-                 fractional odds, decimal odds, and the implied probability on the right. 
-                 """)
-
-implied_probability = moneyline_to_implied_probability(moneyline)
-fractional_odds = moneyline_to_fractional_odds(moneyline)
-decimal_odds = moneyline_to_decimal_odds(moneyline)
+odds_type = st.sidebar.radio("Select Odds Type", ["American", "Decimal"],
+                            captions = ["Common in the U.S.", "Common in Europe, Australia and Canada."])
+if odds_type == "American":
+    odds = st.sidebar.number_input('Enter American Moneyline Odds', value=-110)
+    implied_probability = moneyline_to_implied_probability(odds)
+    fractional_odds = moneyline_to_fractional_odds(odds)
+    decimal_odds = moneyline_to_decimal_odds(odds)
+else:
+    odds = st.sidebar.number_input('Enter Decimal Odds', value=1.91)
+    implied_probability = decimal_to_implied_probability(odds)
+    fractional_odds = decimal_to_fractional_odds(odds)
+    american_odds = decimal_to_american_odds(odds)
 
 
 # ---- KPIs Section ----
 
 col1, col2, col3 = st.columns(3)
+
 col1.metric(label="Implied Probability", value=f"{implied_probability}%")
-col2.metric(label="Fractional Odds", value=fractional_odds)
-col3.metric(label="Decimal Odds", value=decimal_odds)
+if odds_type == "American":
+    col2.metric(label="Fractional Odds", value=fractional_odds)
+    col3.metric(label="Decimal Odds", value=decimal_odds)
+else:
+    col2.metric(label="Fractional Odds", value=fractional_odds)
+    col3.metric(label="American Odds", value=american_odds)
 
 style_metric_cards(border_color = '#CCC',
                    border_left_color = '#FF4B4B')
@@ -108,7 +138,7 @@ style_metric_cards(border_color = '#CCC',
 "---"
 
 # --- Tabs ---
-tab1, tab2, tab3 = st.tabs(["📈 Lookup Table", "📊 Probability Chart", "🗃 About"])
+tab1, tab2, tab3, tab4 = st.tabs(["📈 Lookup Table", "📊 Probability Chart", "📰 Glossary", "🗃 About"])
 
 
 # ---- Lookup table ----
@@ -157,32 +187,31 @@ with tab1:
 with tab2:
     tab2.subheader("Probability Chart")
     tab2.text('Win-Loss chances')
-    # Calculate probabilities
-    implied_probability_win = moneyline_to_implied_probability(moneyline)
+
+    # Depending on the odds type, calculate win and loss probabilities
+    if odds_type == "American":
+        implied_probability_win = moneyline_to_implied_probability(odds)
+    else:  # For Decimal odds
+        implied_probability_win = decimal_to_implied_probability(odds)
+
     implied_probability_loss = 100 - implied_probability_win
 
     # Data for bar chart
     prob_data = pd.DataFrame({
             'Outcome': ['Win', 'Loss'],
-            'Probability': [implied_probability_win, implied_probability_loss],
+            'Probability': [implied_probability_win/100, implied_probability_loss/100],
             'Color': ['#4E79A7', '#F28E2B']  # Specify colors for each bar
         })
 
-    # Altair bar chart
-    # chart = alt.Chart(prob_data).mark_bar(cornerRadiusTopLeft=10,
-    #     cornerRadiusTopRight=10
-    #     ).encode(
-    #         x=alt.X('Outcome', sort='descending', title=None),  # Remove 'Outcome' label and reverse order
-    #         y=alt.Y('Probability', scale=alt.Scale(domain=[0, 100]), axis=alt.Axis(format='%')),  # Set y-axis range and format
-    #         color=alt.Color('Color', scale=None)  # Use the specified hex colors
-    #     )
 
     # Altair bar chart
     bars = alt.Chart(prob_data).mark_bar(cornerRadiusTopLeft=10,
         cornerRadiusTopRight=10
         ).encode(
-            x=alt.X('Outcome', sort='descending', title=None),  # Remove 'Outcome' label and reverse order
-            y=alt.Y('Probability:Q', scale=alt.Scale(domain=[0, 100]), axis=alt.Axis(format='%')),  # Adjusted scale
+            x=alt.X('Outcome', sort='descending', 
+                    axis=alt.Axis(labelAngle=0, title='Bet Outcome', titleFontWeight='bold')),  # Reverse order
+            y=alt.Y('Probability:Q', scale=alt.Scale(domain=[0, 1]), 
+                    axis=alt.Axis(labels=False, title='Probability', titleFontWeight='bold')),  # Adjusted scale
             color=alt.Color('Color', scale=None)  # Use the specified hex colors
         )
 
@@ -192,7 +221,7 @@ with tab2:
             baseline='middle',
             dy=-10  # Adjust the vertical position of the text
         ).encode(
-            text=alt.Text('Probability:Q', format='.1f')  # Format the text with one decimal
+            text=alt.Text('Probability:Q', format='.1%')  # Format the text with one decimal
         )
 
         # Combine the bar and text layers
@@ -202,11 +231,42 @@ with tab2:
     st.altair_chart(chart, use_container_width=True)
 
 
-# ---- About Tab ----
+# ---- Glossary ----
 with tab3:
-    tab3.subheader("About")
-    # Place the content for the About section here
+    tab3.subheader("Glossary")
     tab3.markdown("""
+         - **American odds**: Odds expression indicating return relative to 100 unit base figure. Whenever there is a minus (-) you lay that amount
+        to win `$100`, where there is a plus (+) you win that amount for every `$100` you bet.
+        
+        - **Decimal odds**: Odds expression (sometimes referred to as European odds) where the odds are shown in decimal format.
+                  The format is a simple numerical representation of the potential return of a bet, which includes the stake amount.
+
+        - **Fractional odds**: Odds expression (most commonly used in the UK) which presents odds in a fractional format.
+
+        - **Laying the Points**: Backing the favorite on the Points Spread and therefore accepting the points Handicap.
+                  
+        - **Moneyline**: A bet on the outcome of a match/game. One of three basic bet types.
+                  
+        - **Odds**: A representation of the perceived frequency of an event derived from the underlying probability which enables betting.
+                  
+        - **Over/Under**: Bet on whether the total of any given variable (like a point total) will be over or under the mark set by a bookmaker.
+                  
+        - **Spread**: Also known as points spread, it's the measure of perceived difference in the abilities of participants in a given event 
+                  as illustrated in the Handicap/Spread market. The favorite is always indicated by a minus sign (e.g. -6.5pts) and the underdog
+                   by a plus sign (e.g.+6.5pts).
+        
+        - **Vigorish**: Also know as Vig, Juice, Margin, or Commission. North American term for the implied charge that a bookmaker 
+                  adds for taking bets on any given market, traditionally 10 percent for Money Line, Points Spread and Totals. 
+                  It representes the implied cost of placing a bet set by the bookmaker. Bookmakers inflate the perceived 
+                  likelihood of an event, as represented in their odds, suggesting it is more likely than underlying probability.
+        """)
+    
+
+# ---- About Tab ----
+with tab4:
+    tab4.subheader("About")
+    # Place the content for the About section here
+    tab4.markdown("""
          Betting odds are the foundation of sports betting. They’re set by bookmakers, 
         and they tell you the implied probability for a given bet to win. The odds tell 
         you how much you’ll win on any wager. They tell you what the expected outcome is for both teams, and can be listed
