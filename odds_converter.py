@@ -74,6 +74,19 @@ def decimal_to_american_odds(decimal_odds):
     return round(american_odds)
 
 
+# Define $ Total Winnings function 
+def to_win(bet_amount, moneyline):
+    """
+    Convert American moneyline odds to total winings.
+    """
+    if moneyline > 0:
+        winnings = bet_amount * moneyline/100
+    else:
+        winnings = bet_amount * 100 / abs(moneyline)
+    return bet_amount + winnings 
+
+
+
 
 # ---- MAINPAGE UI ----
 
@@ -102,12 +115,13 @@ This app allows you to quickly reference sports betting odds and their implied p
 
 # ---- Sidebar ----
 
-# Sidebar for odds type selection and input
+# Sidebar for odds type selection and moneyline + bet amount inputs
 
 st.sidebar.header('Selector')
 
 odds_type = st.sidebar.radio("Select Odds Type", ["American", "Decimal"],
                             captions = ["Common in the U.S.", "Common in Europe, Australia and Canada."])
+
 if odds_type == "American":
     odds = st.sidebar.number_input('Enter American Moneyline Odds', value=-110)
     implied_probability = moneyline_to_implied_probability(odds)
@@ -118,6 +132,13 @@ else:
     implied_probability = decimal_to_implied_probability(odds)
     fractional_odds = decimal_to_fractional_odds(odds)
     american_odds = decimal_to_american_odds(odds)
+
+bet_amount = st.sidebar.number_input('Enter Bet Amount ($)', value=100, min_value=0)
+
+# Calculate the total payout
+total_payout = to_win(bet_amount, odds if odds_type == "American" else american_odds)
+profit = total_payout - bet_amount
+expected_value = (profit * (implied_probability/100)) - (1-(implied_probability/100) * bet_amount)
 
 
 # ---- KPIs Section ----
@@ -132,8 +153,16 @@ else:
     col2.metric(label="Fractional Odds", value=fractional_odds)
     col3.metric(label="American Odds", value=american_odds)
 
+
+# Bet payouts and expected value KPIs
+col1, col2, col3 = st.columns(3)
+#col1.metric("To Win", value = "$100")
+col1.metric(label="Total Payout", value=f"${total_payout:.2f}")
+col2.metric("Profit (Earnings)", value=f"${profit:.2f}")
+col3.metric("Expected Value", value=f"${expected_value:.2f}")
+
 style_metric_cards(border_color = '#CCC',
-                   border_left_color = '#FF4B4B')
+                   border_left_color = '#AA0000')
 
 "---"
 
@@ -240,6 +269,11 @@ with tab3:
         
         - **Decimal odds**: Odds expression (sometimes referred to as European odds) where the odds are shown in decimal format.
                   The format is a simple numerical representation of the potential return of a bet, which includes the stake amount.
+
+        - **Expected value**: The amount a player can expect to win or lose if they were to place a bet on the same odds many times over, 
+                  calculated through a simple equation multiplying your probability of winning with the amount you could win per bet (profit), 
+                  and subtracting the probability of losing multiplied by the amount lost per bet. For example, if your calculated EV is `-$2.00`
+                for a `$10` bet, this suggests you will lose an average of `$2` for every `$10` staked.
 
         - **Fractional odds**: Odds expression (most commonly used in the UK) which presents odds in a fractional format.
 
